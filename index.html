@@ -9,8 +9,11 @@
 <body>
 <header>
   <span class="brand">Code Pipeline</span>
+  <span class="version" data-version></span>
+  <button id="btnHelp" class="icon" title="사용법" aria-label="사용법">?</button>
   <input id="title" placeholder="파이프라인 제목 (예: VQC로 Iris 분류하기)">
   <span class="seg" role="group" aria-label="테마">
+    <button data-theme-btn="auto" title="운영체제 설정을 따름">Auto</button>
     <button data-theme-btn="light">Light</button>
     <button data-theme-btn="dark">Dark</button>
   </span>
@@ -40,6 +43,56 @@
   </section>
 </main>
 <div id="toast"></div>
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="help-body">
+    <div class="help-head">
+      <h3 id="helpTitle">사용법</h3>
+      <span class="version" data-version></span>
+    </div>
+    <p>Python 코드를 단계별 박스로 나눠 파이프라인 이미지로 만듭니다.</p>
+
+    <h4>기본 순서</h4>
+    <ol>
+      <li>예제 코드를 왼쪽 편집창에 붙여넣습니다.</li>
+      <li>한 단계로 묶을 줄을 선택하고 <kbd>Ctrl</kbd>+<kbd>/</kbd>를 누른 뒤 설명을 적습니다.</li>
+      <li>위쪽 칸에 파이프라인 제목을 적습니다.</li>
+      <li><b>이미지 복사</b>를 누르고 Discord에서 <kbd>Ctrl</kbd>+<kbd>V</kbd> 합니다.</li>
+    </ol>
+
+    <h4>단계 표시 규칙</h4>
+    <ul>
+      <li><code># %% 설명</code> 줄에서 새 박스가 시작됩니다. 직접 입력해도 됩니다.</li>
+      <li>바로 이어진 <code># %%</code> 줄은 둘째 줄 설명(회색 글씨)이 됩니다.</li>
+      <li>내용 없는 <code># %%</code> 줄은 앞 박스가 끝나는 곳을 표시합니다.</li>
+    </ul>
+
+    <h4>단축키</h4>
+    <table>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>/</kbd></td><td>선택한 줄(없으면 현재 줄)을 블록 → 주석 → 원래 코드 순으로 전환</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>공백 4칸 들여쓰기</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>되돌리기</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>MD 저장</td></tr>
+    </table>
+    <p class="note">Mac에서는 Ctrl 대신 ⌘(Cmd)를 누릅니다.</p>
+
+    <h4>저장과 불러오기</h4>
+    <table>
+      <tr><td>PY 저장</td><td><code># %%</code> 표시가 든 원본 코드. 그대로 실행되고, 다시 열어 이어서 편집할 수 있습니다.</td></tr>
+      <tr><td>MD 저장</td><td>제목·설명·코드블록으로 정리된 문서</td></tr>
+      <tr><td>PNG 저장</td><td>파이프라인 이미지 파일</td></tr>
+      <tr><td>열기</td><td>.py/.md 파일 불러오기. 파일을 창에 끌어다 놓아도 됩니다.</td></tr>
+    </table>
+    <p class="note">작성 중인 내용은 이 브라우저에 자동으로 보관됩니다.</p>
+
+    <h4>테마</h4>
+    <p>Auto는 운영체제의 라이트/다크 설정을 따릅니다. 고른 테마는 편집창과 이미지에 함께 적용됩니다.</p>
+
+    <form method="dialog" class="actions">
+      <a href="https://github.com/karl27hg/code-pipeline" target="_blank" rel="noopener">GitHub</a>
+      <button class="primary" autofocus>닫기</button>
+    </form>
+  </div>
+</dialog>
 <dialog id="confirmImport">
   <form method="dialog">
     <h3>파일을 불러올까요?</h3>

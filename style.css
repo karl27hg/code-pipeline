@@ -17,7 +17,12 @@ header {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--border);
 }
-header .brand { font-weight: 700; margin-right: 8px; }
+header .brand { font-weight: 700; }
+.version { font-size: 12px; color: var(--muted); }
+button.icon {
+  width: 24px; height: 24px; padding: 0; margin-right: 8px; border-radius: 50%;
+  font-weight: 700; font-size: 13px; line-height: 1;
+}
 #title {
   flex: 1 1 260px; min-width: 0; padding: 7px 10px; font: inherit;
   background: var(--input); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
@@ -73,7 +78,25 @@ dialog {
 dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 dialog h3 { margin: 0 0 8px; font-size: 16px; }
 dialog p { margin: 0 0 18px; color: var(--muted); word-break: keep-all; }
-dialog .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+dialog .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+/* help: padding lives inside so a click on the dialog element itself means the backdrop */
+#help { width: min(580px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; overflow: auto; }
+#help .help-body { padding: 20px 22px; }
+#help .help-head { display: flex; align-items: baseline; gap: 8px; }
+#help h4 { margin: 18px 0 6px; font-size: 13px; }
+#help p { margin: 0 0 6px; }
+#help .note { font-size: 12px; margin-top: 6px; }
+#help ol, #help ul { margin: 0; padding-left: 20px; }
+#help li { margin: 3px 0; }
+#help table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#help td { padding: 5px 8px 5px 0; border-top: 1px solid var(--border); vertical-align: top; }
+#help td:first-child { white-space: nowrap; padding-right: 14px; }
+#help .actions { margin-top: 20px; }
+#help .actions a { margin-right: auto; color: var(--accent); }
+#help code, kbd {
+  font: 12px Consolas, "Cascadia Mono", Menlo, monospace; padding: 1px 5px; border-radius: 4px; background: var(--bg);
+}
+kbd { border: 1px solid var(--border); border-bottom-width: 2px; }
 #toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
   padding: 8px 14px; border-radius: 6px; background: var(--text); color: var(--bg);

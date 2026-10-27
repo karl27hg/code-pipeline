@@ -3,15 +3,18 @@
 // ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const els = { title: $('title'), source: $('source'), canvas: $('preview'), file: $('file'), toast: $('toast') };
+const VERSION = '0.1.0';
 const STORE_KEY = 'pipe-render.v1';
-let theme = 'light';
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+let themePref = 'auto';  // auto | light | dark, what the user picked
+let theme = 'light';     // light | dark, what is drawn
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch { return null; }
 }
 function save() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ title: els.title.value, source: els.source.value, theme }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ title: els.title.value, source: els.source.value, themePref }));
   } catch { /* storage unavailable: ignore */ }
 }
 
@@ -52,15 +55,17 @@ function scheduleUpdate() {
   pending = requestAnimationFrame(update);
 }
 
-function setTheme(name) {
-  theme = name;
-  document.documentElement.dataset.theme = name;
+function setTheme(pref) {
+  themePref = pref in THEMES ? pref : 'auto';
+  theme = themePref === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : themePref;
+  document.documentElement.dataset.theme = theme;
   // the editor uses the same syntax palette as the rendered image
-  for (const [k, c] of Object.entries(THEMES[name].syn)) document.documentElement.style.setProperty(`--syn-${k}`, c);
+  for (const [k, c] of Object.entries(THEMES[theme].syn)) document.documentElement.style.setProperty(`--syn-${k}`, c);
   document.querySelectorAll('[data-theme-btn]').forEach(b =>
-    b.setAttribute('aria-pressed', String(b.dataset.themeBtn === name)));
+    b.setAttribute('aria-pressed', String(b.dataset.themeBtn === themePref)));
   update();
 }
+darkQuery.addEventListener('change', () => { if (themePref === 'auto') setTheme('auto'); });
 
 function fileBase() {
   return (els.title.value.trim() || 'pipeline').replace(/[\\/:*?"<>|]+/g, '_');
@@ -250,6 +255,7 @@ function toggleBlock() {
 els.source.addEventListener('input', () => { highlight(); scheduleUpdate(); });
 els.source.addEventListener('scroll', syncScroll);
 els.title.addEventListener('input', scheduleUpdate);
+window.addEventListener('pagehide', save);  // keep edits made right before closing or reloading
 els.source.addEventListener('keydown', e => {
   if (e.key === 'Tab' && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
@@ -307,11 +313,21 @@ function track(name, params) {
   if (window.gtag) gtag('event', name, params);
 }
 
+// help
+const help = $('help');
+$('btnHelp').addEventListener('click', () => {
+  help.showModal();
+  help.scrollTop = 0;  // focusing the close button scrolls to the bottom; start at the top
+});
+help.addEventListener('click', e => { if (e.target === help) help.close(); });  // backdrop click
+document.querySelectorAll('[data-version]').forEach(el => { el.textContent = `v${VERSION}`; });
+
 // init
 initAnalytics();
 const saved = load();
 const params = new URLSearchParams(location.search);
-els.title.value = saved ? saved.title : SAMPLE_TITLE;
+// an untouched sample keeps showing the current sample title
+const untouched = !saved || (saved.source === SAMPLE && saved.title === 'VQC로 Iris 분류하기');
+els.title.value = untouched ? SAMPLE_TITLE : saved.title;
 els.source.value = saved ? saved.source : SAMPLE;
-setTheme(params.get('theme') || (saved && saved.theme) ||
-  (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+setTheme(params.get('theme') || (saved && saved.themePref) || 'auto');
