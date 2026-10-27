@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Pipeline</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <span class="brand">Code Pipeline</span>
+  <input id="title" placeholder="파이프라인 제목 (예: VQC로 Iris 분류하기)">
+  <span class="seg" role="group" aria-label="테마">
+    <button data-theme-btn="light">Light</button>
+    <button data-theme-btn="dark">Dark</button>
+  </span>
+  <button id="btnStep" title="Ctrl+/">+ 단계 구분</button>
+  <button id="btnOpen">열기</button>
+  <button id="btnMd" title="Ctrl+S">MD 저장</button>
+  <button id="btnPng">PNG 저장</button>
+  <button id="btnCopy" class="primary">이미지 복사</button>
+  <input id="file" type="file" accept=".md,.markdown,.py,.txt" hidden>
+</header>
+<main>
+  <section class="pane">
+    <h2>코드</h2>
+    <textarea id="source" spellcheck="false" wrap="off"></textarea>
+    <div class="help">
+      <code># %% 설명</code> 줄에서 새 박스가 시작됩니다. 바로 이어진 <code># %%</code> 줄은 여러 줄 설명이 됩니다.
+      <b>Ctrl+/</b>: 선택한 줄(없으면 현재 줄)을 블록 → 주석 → 원래 코드 순으로 전환 · .md/.py 파일 끌어다 놓기 가능
+    </div>
+  </section>
+  <section class="pane">
+    <h2>미리보기</h2>
+    <div id="previewWrap"><canvas id="preview"></canvas></div>
+  </section>
+</main>
+<div id="toast"></div>
+<dialog id="confirmImport">
+  <form method="dialog">
+    <h3>파일을 불러올까요?</h3>
+    <p id="confirmMsg"></p>
+    <div class="actions">
+      <button value="cancel">취소</button>
+      <button value="save">MD로 저장 후 불러오기</button>
+      <button value="ok" class="primary" autofocus>불러오기</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
