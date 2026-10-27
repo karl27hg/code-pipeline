@@ -8,13 +8,17 @@ const STORE_KEY = 'pipe-render.v1';
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 let themePref = 'auto';  // auto | light | dark, what the user picked
 let theme = 'light';     // light | dark, what is drawn
+let codeSize = 13;       // editor font px
+let previewZoom = 0;     // preview display scale, 0 = fit the pane; the image itself is unchanged
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch { return null; }
 }
 function save() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ title: els.title.value, source: els.source.value, themePref }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      title: els.title.value, source: els.source.value, themePref, codeSize, previewZoom,
+    }));
   } catch { /* storage unavailable: ignore */ }
 }
 
@@ -47,6 +51,7 @@ function highlight() {
 function update() {
   highlight();
   render(els.canvas, els.title.value.trim(), parseSource(els.source.value), theme);
+  sizePreview();
   save();
 }
 let pending = 0;
@@ -66,6 +71,39 @@ function setTheme(pref) {
   update();
 }
 darkQuery.addEventListener('change', () => { if (themePref === 'auto') setTheme('auto'); });
+
+// ---- text size: editor font and preview zoom
+const CODE_SIZES = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24];
+const ZOOMS = [0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+// next value in the list above (dir 1) or below (dir -1) cur
+const stepFrom = (list, cur, dir) => (dir > 0
+  ? list.find(v => v > cur + 1e-3) ?? list.at(-1)
+  : list.findLast(v => v < cur - 1e-3) ?? list[0]);
+
+function setCodeSize(px) {
+  codeSize = CODE_SIZES.includes(px) ? px : 13;
+  document.documentElement.style.setProperty('--code-size', codeSize + 'px');
+  $('codeSize').textContent = codeSize + 'px';
+  syncScroll();
+  save();
+}
+
+function sizePreview() {
+  const c = els.canvas, w = c.width / 2;  // render() draws at 2x
+  c.classList.toggle('zoomed', previewZoom > 0);
+  c.style.width = Math.round(previewZoom ? w * previewZoom : w) + 'px';
+  $('zoomVal').textContent = previewZoom ? Math.round(previewZoom * 100) + '%' : '맞춤';
+}
+function setZoom(z) {
+  previewZoom = ZOOMS.includes(z) ? z : 0;
+  sizePreview();
+  save();
+}
+function zoomBy(dir) {
+  // from "fit", step relative to the size it is shown at now
+  const cur = previewZoom || els.canvas.clientWidth / (els.canvas.width / 2);
+  setZoom(stepFrom(ZOOMS, cur, dir));
+}
 
 function fileBase() {
   return (els.title.value.trim() || 'pipeline').replace(/[\\/:*?"<>|]+/g, '_');
@@ -295,10 +333,12 @@ function deleteLines() {
   replaceLines(ta, lines, first, last, []);
   // keep the caret's column on the line that moved into place
   const rest = [...lines.slice(0, first), ...lines.slice(last + 1)];
-  if (!rest.length) return;
-  const k = Math.min(first, rest.length - 1);
-  const caret = offsetOf(rest, k) + Math.min(col, rest[k].length);
-  ta.setSelectionRange(caret, caret);
+  if (rest.length) {
+    const k = Math.min(first, rest.length - 1);
+    const caret = offsetOf(rest, k) + Math.min(col, rest[k].length);
+    ta.setSelectionRange(caret, caret);
+  }
+  return lines.slice(first, last + 1).join('\n') + '\n';  // the removed lines
 }
 
 els.source.addEventListener('input', () => { highlight(); scheduleUpdate(); });
@@ -318,6 +358,12 @@ els.source.addEventListener('keydown', e => {
     deleteLines();
   }
 });
+// Ctrl+X or Shift+Del with nothing selected cuts the whole line, like VS Code
+els.source.addEventListener('cut', e => {
+  if (els.source.selectionStart !== els.source.selectionEnd) return;
+  e.preventDefault();
+  e.clipboardData.setData('text/plain', deleteLines());
+});
 els.source.addEventListener('paste', e => {
   const text = e.clipboardData.getData('text/plain');
   if (!looksLikeMarkdown(text)) return;
@@ -333,6 +379,12 @@ $('btnStep').addEventListener('click', toggleBlock);
 $('btnOpen').addEventListener('click', () => els.file.click());
 $('btnMd').addEventListener('click', exportMd);
 $('btnClear').addEventListener('click', clearEditor);
+$('codeSmaller').addEventListener('click', () => setCodeSize(stepFrom(CODE_SIZES, codeSize, -1)));
+$('codeBigger').addEventListener('click', () => setCodeSize(stepFrom(CODE_SIZES, codeSize, 1)));
+$('codeSize').addEventListener('click', () => setCodeSize(13));
+$('zoomOut').addEventListener('click', () => zoomBy(-1));
+$('zoomIn').addEventListener('click', () => zoomBy(1));
+$('zoomVal').addEventListener('click', () => setZoom(0));
 $('btnSample').addEventListener('click', showSample);
 $('btnPy').addEventListener('click', exportPy);
 $('btnPng').addEventListener('click', async () => {
@@ -384,4 +436,7 @@ const params = new URLSearchParams(location.search);
 const untouched = !saved || (saved.source === SAMPLE && saved.title === 'VQC로 Iris 분류하기');
 els.title.value = untouched ? SAMPLE_TITLE : saved.title;
 els.source.value = saved ? saved.source : SAMPLE;
+codeSize = (saved && saved.codeSize) || 13;
+previewZoom = (saved && saved.previewZoom) || 0;
+setCodeSize(codeSize);
 setTheme(params.get('theme') || (saved && saved.themePref) || 'auto');

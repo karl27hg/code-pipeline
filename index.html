@@ -29,6 +29,11 @@
   <section class="pane">
     <div class="pane-head">
       <h2>코드</h2>
+      <span class="seg zoom" role="group" aria-label="코드 글자 크기">
+        <button id="codeSmaller" class="small" title="글자 작게" aria-label="글자 작게">−</button>
+        <button id="codeSize" class="small" title="기본 크기로"></button>
+        <button id="codeBigger" class="small" title="글자 크게" aria-label="글자 크게">+</button>
+      </span>
       <button id="btnClear" class="small">비우기</button>
       <button id="btnSample" class="small">예제</button>
     </div>
@@ -43,7 +48,14 @@
     </div>
   </section>
   <section class="pane">
-    <div class="pane-head"><h2>미리보기</h2></div>
+    <div class="pane-head">
+      <h2>미리보기</h2>
+      <span class="seg zoom" role="group" aria-label="미리보기 크기">
+        <button id="zoomOut" class="small" title="축소" aria-label="축소">−</button>
+        <button id="zoomVal" class="small" title="창에 맞춤"></button>
+        <button id="zoomIn" class="small" title="확대" aria-label="확대">+</button>
+      </span>
+    </div>
     <div id="previewWrap"><canvas id="preview"></canvas></div>
   </section>
 </main>
@@ -75,6 +87,7 @@
     <table>
       <tr><td><kbd>Ctrl</kbd>+<kbd>/</kbd></td><td>선택한 줄(없으면 현재 줄)을 블록 → 주석 → 원래 코드 순으로 전환</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd></td><td>선택한 줄(없으면 현재 줄) 삭제</td></tr>
+      <tr><td><kbd>Shift</kbd>+<kbd>Del</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd></td><td>선택이 없으면 현재 줄을 잘라내기</td></tr>
       <tr><td><kbd>Tab</kbd></td><td>공백 4칸 들여쓰기</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>되돌리기</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>MD 저장</td></tr>
@@ -87,6 +100,7 @@
       <tr><td>MD 저장</td><td>제목·설명·코드블록으로 정리된 문서</td></tr>
       <tr><td>PNG 저장</td><td>파이프라인 이미지 파일</td></tr>
       <tr><td>열기</td><td>.py/.md 파일 불러오기. 파일을 창에 끌어다 놓아도 됩니다.</td></tr>
+      <tr><td>− / +</td><td>코드 칸 글자 크기, 미리보기 확대·축소. 가운데 숫자를 누르면 원래대로 돌아갑니다. 저장되는 이미지는 바뀌지 않습니다.</td></tr>
       <tr><td>비우기 / 예제</td><td>코드 칸 위의 버튼. 작성 중인 내용이 있으면 바꾸기 전에 확인합니다.</td></tr>
     </table>
     <p class="note">작성 중인 내용은 이 브라우저에 자동으로 보관됩니다.</p>
