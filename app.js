@@ -281,6 +281,26 @@ function toggleBlock() {
   ta.setSelectionRange(caret, caret);
 }
 
+// Ctrl+Shift+K deletes the selected lines (or the caret line), like VS Code
+function deleteLines() {
+  const ta = els.source;
+  const v = ta.value;
+  const lines = v.split('\n');
+  const s = ta.selectionStart;
+  let e = ta.selectionEnd;
+  if (e > s && v[e - 1] === '\n') e--;
+  const first = v.slice(0, s).split('\n').length - 1;
+  const last = Math.max(first, v.slice(0, e).split('\n').length - 1);
+  const col = s - offsetOf(lines, first);
+  replaceLines(ta, lines, first, last, []);
+  // keep the caret's column on the line that moved into place
+  const rest = [...lines.slice(0, first), ...lines.slice(last + 1)];
+  if (!rest.length) return;
+  const k = Math.min(first, rest.length - 1);
+  const caret = offsetOf(rest, k) + Math.min(col, rest[k].length);
+  ta.setSelectionRange(caret, caret);
+}
+
 els.source.addEventListener('input', () => { highlight(); scheduleUpdate(); });
 els.source.addEventListener('scroll', syncScroll);
 els.title.addEventListener('input', scheduleUpdate);
@@ -293,6 +313,9 @@ els.source.addEventListener('keydown', e => {
   } else if ((e.ctrlKey || e.metaKey) && (e.key === '/' || e.code === 'Slash' || e.key === 'Enter')) {
     e.preventDefault();
     toggleBlock();
+  } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyK') {
+    e.preventDefault();
+    deleteLines();
   }
 });
 els.source.addEventListener('paste', e => {
