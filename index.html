@@ -27,10 +27,15 @@
 </header>
 <main>
   <section class="pane">
-    <h2>코드</h2>
+    <div class="pane-head">
+      <h2>코드</h2>
+      <button id="btnClear" class="small">비우기</button>
+      <button id="btnSample" class="small">예제</button>
+    </div>
     <div class="editor">
       <pre id="hl" aria-hidden="true"><code></code></pre>
-      <textarea id="source" spellcheck="false" wrap="off"></textarea>
+      <textarea id="source" spellcheck="false" wrap="off"
+        placeholder="여기에 코드를 붙여넣으세요.&#10;&#10;한 단계로 묶을 줄을 선택하고 Ctrl+/ 를 누르면 박스가 됩니다.&#10;자세한 사용법은 위쪽 ? 버튼에 있습니다."></textarea>
     </div>
     <div class="help">
       <code># %% 설명</code> 줄에서 새 박스가 시작됩니다. 바로 이어진 <code># %%</code> 줄은 여러 줄 설명이 됩니다.
@@ -38,7 +43,7 @@
     </div>
   </section>
   <section class="pane">
-    <h2>미리보기</h2>
+    <div class="pane-head"><h2>미리보기</h2></div>
     <div id="previewWrap"><canvas id="preview"></canvas></div>
   </section>
 </main>
@@ -81,6 +86,7 @@
       <tr><td>MD 저장</td><td>제목·설명·코드블록으로 정리된 문서</td></tr>
       <tr><td>PNG 저장</td><td>파이프라인 이미지 파일</td></tr>
       <tr><td>열기</td><td>.py/.md 파일 불러오기. 파일을 창에 끌어다 놓아도 됩니다.</td></tr>
+      <tr><td>비우기 / 예제</td><td>코드 칸 위의 버튼. 작성 중인 내용이 있으면 바꾸기 전에 확인합니다.</td></tr>
     </table>
     <p class="note">작성 중인 내용은 이 브라우저에 자동으로 보관됩니다.</p>
 
@@ -93,14 +99,14 @@
     </form>
   </div>
 </dialog>
-<dialog id="confirmImport">
+<dialog id="confirmDlg">
   <form method="dialog">
-    <h3>파일을 불러올까요?</h3>
+    <h3 id="confirmTitle"></h3>
     <p id="confirmMsg"></p>
     <div class="actions">
       <button value="cancel">취소</button>
-      <button value="save">MD로 저장 후 불러오기</button>
-      <button value="ok" class="primary" autofocus>불러오기</button>
+      <button value="save" id="confirmSave"></button>
+      <button value="ok" id="confirmOk" class="primary" autofocus></button>
     </div>
   </form>
 </dialog>

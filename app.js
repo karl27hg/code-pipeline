@@ -111,46 +111,75 @@ function exportPy() {
 }
 
 function importText(text, name = '') {
+  let title = els.title.value;
   const isPy = /\.py$/i.test(name);
   if (!isPy && (/\.(md|markdown)$/i.test(name) || looksLikeMarkdown(text))) {
     const doc = fromMarkdown(text);
-    if (doc.title) els.title.value = doc.title;
+    if (doc.title) title = doc.title;
     text = stepsToSource(doc.steps);
   } else {
     text = normalize(text);
     const m = text.match(PY_TITLE);
     if (m) {
-      els.title.value = m[1].trim();
+      title = m[1].trim();
       text = text.slice(m[0].length);
     }
   }
-  replaceRange(els.source, 0, els.source.value.length, text);  // undoable with Ctrl+Z
-  els.source.setSelectionRange(0, 0);
-  els.source.scrollTop = 0;
-  update();
+  setEditor(title, text);
 }
 
 // Nothing to lose when the editor is empty or still shows the untouched sample
 const isPristine = () => !els.source.value.trim() ||
   (els.source.value === SAMPLE && els.title.value === SAMPLE_TITLE);
 
-function confirmReplace(name) {
-  if (isPristine()) return Promise.resolve('ok');
-  const dlg = $('confirmImport');
-  $('confirmMsg').textContent =
-    `지금 작성 중인 내용이 ${name ? `'${name}'` : '붙여넣은 마크다운'}의 내용으로 바뀝니다.`;
+// Ask before replacing the editor's content; "save" first downloads the current source as .py.
+// Resolves true when the caller should go ahead.
+async function confirmReplace({ title, message, action }) {
+  if (isPristine()) return true;
+  const dlg = $('confirmDlg');
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = message;
+  $('confirmSave').textContent = `PY로 저장 후 ${action}`;
+  $('confirmOk').textContent = action;
   dlg.returnValue = 'cancel';
   dlg.showModal();
-  return new Promise(r => dlg.addEventListener('close', () => r(dlg.returnValue), { once: true }));
+  const choice = await new Promise(r => dlg.addEventListener('close', () => r(dlg.returnValue), { once: true }));
+  if (choice === 'save') exportPy();
+  return choice === 'ok' || choice === 'save';  // Esc may close with '' instead of 'cancel'
 }
 
 async function importWithConfirm(text, name = '') {
-  const choice = await confirmReplace(name);
-  if (choice !== 'ok' && choice !== 'save') return false;  // Esc may close with '' instead of 'cancel'
-  if (choice === 'save') exportMd();
+  const go = await confirmReplace({
+    title: '파일을 불러올까요?',
+    message: `지금 작성 중인 내용이 ${name ? `'${name}'` : '붙여넣은 마크다운'}의 내용으로 바뀝니다.`,
+    action: '불러오기',
+  });
+  if (!go) return false;
   importText(text, name);
   track('import_file', { kind: name ? name.split('.').pop() : 'paste' });
   return true;
+}
+
+function setEditor(title, source) {
+  els.title.value = title;
+  replaceRange(els.source, 0, els.source.value.length, source);  // code stays undoable with Ctrl+Z
+  els.source.setSelectionRange(0, 0);
+  els.source.scrollTop = 0;
+  update();
+}
+
+async function clearEditor() {
+  const go = await confirmReplace({
+    title: '편집창을 비울까요?', message: '지금 작성 중인 제목과 코드가 지워집니다.', action: '비우기',
+  });
+  if (go) setEditor('', '');
+}
+
+async function showSample() {
+  const go = await confirmReplace({
+    title: '예제를 불러올까요?', message: '지금 작성 중인 내용이 예제로 바뀝니다.', action: '예제 불러오기',
+  });
+  if (go) setEditor(SAMPLE_TITLE, SAMPLE);
 }
 
 // Edit through execCommand so the browser's undo stack (Ctrl+Z) keeps working
@@ -280,6 +309,8 @@ document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('c
 $('btnStep').addEventListener('click', toggleBlock);
 $('btnOpen').addEventListener('click', () => els.file.click());
 $('btnMd').addEventListener('click', exportMd);
+$('btnClear').addEventListener('click', clearEditor);
+$('btnSample').addEventListener('click', showSample);
 $('btnPy').addEventListener('click', exportPy);
 $('btnPng').addEventListener('click', async () => {
   download(await canvasBlob(), fileBase() + '.png');

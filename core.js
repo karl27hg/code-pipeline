@@ -384,7 +384,7 @@ function render(canvas, title, steps, themeName, scale = 2) {
   if (!L.boxes.length) {
     ctx.fillStyle = T.muted;
     ctx.font = M.descFont;
-    ctx.fillText('코드를 붙여넣고 # %% 줄로 단계를 나눠보세요', cx, L.height - M.pad - 30);
+    ctx.fillText('코드를 붙여넣고 Ctrl+/ 로 단계를 나눠보세요', cx, L.height - M.pad - 30);
   }
 
   L.boxes.forEach((b, idx) => {
