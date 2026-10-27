@@ -22,7 +22,27 @@ function toast(msg) {
   toast.timer = setTimeout(() => els.toast.classList.remove('show'), 1800);
 }
 
+// ---- editor highlighting: a <pre> under the transparent textarea
+const hl = $('hl');
+const escapeHtml = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+
+function syncScroll() {
+  hl.scrollTop = els.source.scrollTop;
+  hl.scrollLeft = els.source.scrollLeft;
+}
+
+function highlight() {
+  const text = els.source.value;
+  const raw = text.split('\n');
+  const html = tokenLines(text).map((toks, i) => (MARKER.test(raw[i])
+    ? `<span class="t-mk">${escapeHtml(raw[i])}</span>`
+    : toks.map(t => (t.t === 'plain' ? escapeHtml(t.s) : `<span class="t-${t.t}">${escapeHtml(t.s)}</span>`)).join('')));
+  hl.firstElementChild.innerHTML = html.join('\n') + '\n';
+  syncScroll();
+}
+
 function update() {
+  highlight();
   render(els.canvas, els.title.value.trim(), parseSource(els.source.value), theme);
   save();
 }
@@ -35,6 +55,8 @@ function scheduleUpdate() {
 function setTheme(name) {
   theme = name;
   document.documentElement.dataset.theme = name;
+  // the editor uses the same syntax palette as the rendered image
+  for (const [k, c] of Object.entries(THEMES[name].syn)) document.documentElement.style.setProperty(`--syn-${k}`, c);
   document.querySelectorAll('[data-theme-btn]').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset.themeBtn === name)));
   update();
@@ -225,7 +247,8 @@ function toggleBlock() {
   ta.setSelectionRange(caret, caret);
 }
 
-els.source.addEventListener('input', scheduleUpdate);
+els.source.addEventListener('input', () => { highlight(); scheduleUpdate(); });
+els.source.addEventListener('scroll', syncScroll);
 els.title.addEventListener('input', scheduleUpdate);
 els.source.addEventListener('keydown', e => {
   if (e.key === 'Tab' && !e.ctrlKey && !e.altKey) {

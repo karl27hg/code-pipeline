@@ -25,7 +25,10 @@
 <main>
   <section class="pane">
     <h2>코드</h2>
-    <textarea id="source" spellcheck="false" wrap="off"></textarea>
+    <div class="editor">
+      <pre id="hl" aria-hidden="true"><code></code></pre>
+      <textarea id="source" spellcheck="false" wrap="off"></textarea>
+    </div>
     <div class="help">
       <code># %% 설명</code> 줄에서 새 박스가 시작됩니다. 바로 이어진 <code># %%</code> 줄은 여러 줄 설명이 됩니다.
       <b>Ctrl+/</b>: 선택한 줄(없으면 현재 줄)을 블록 → 주석 → 원래 코드 순으로 전환 · .md/.py 파일 끌어다 놓기 가능

@@ -35,11 +35,33 @@ main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1
 .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .pane + .pane { border-left: 1px solid var(--border); }
 .pane h2 { margin: 0; padding: 8px 16px; font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); }
-#source {
-  flex: 1; width: 100%; resize: none; border: 0; outline: none; padding: 12px 16px;
-  background: var(--input); color: var(--text); tab-size: 4;
+/* The textarea's text is transparent; the highlighted <pre> underneath shows through.
+   Both must share every metric that affects where characters land. */
+.editor { position: relative; flex: 1; min-height: 0; background: var(--input); }
+#source, #hl {
+  position: absolute; inset: 0; margin: 0; padding: 12px 16px; border: 0;
   font: 13px/1.55 Consolas, "Cascadia Mono", Menlo, "D2Coding", "Malgun Gothic", monospace;
+  font-variant-ligatures: none; font-kerning: none; letter-spacing: 0;
+  tab-size: 4; white-space: pre; overflow-wrap: normal;
 }
+#source {
+  width: 100%; height: 100%; resize: none; outline: none; overflow: auto;
+  background: transparent; color: transparent; caret-color: var(--text);
+}
+#source::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+#hl { overflow: hidden; pointer-events: none; color: var(--syn-plain); }
+/* extra room so the layer can scroll as far as the textarea, whose scrollbars take space */
+#hl code { display: inline-block; min-width: 100%; padding: 0 40px 40px 0; font: inherit; }
+#hl .t-kw { color: var(--syn-kw); }
+#hl .t-str { color: var(--syn-str); }
+#hl .t-num { color: var(--syn-num); }
+#hl .t-com { color: var(--syn-com); }
+#hl .t-fn { color: var(--syn-fn); }
+#hl .t-builtin { color: var(--syn-builtin); }
+#hl .t-deco { color: var(--syn-deco); }
+#hl .t-const { color: var(--syn-const); }
+#hl .t-cls { color: var(--syn-cls); }
+#hl .t-mk { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .help { padding: 8px 16px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); }
 .help code { font-family: Consolas, "Cascadia Mono", Menlo, monospace; color: var(--text); }
 #previewWrap { flex: 1; overflow: auto; padding: 16px; background: var(--preview-bg); }
