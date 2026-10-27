@@ -72,13 +72,30 @@ function exportMd() {
   track('export_md');
 }
 
+// The .py file keeps the editor text as is, with the title on a first "# title:" line
+const PY_TITLE = /^# title:[ \t]*(.*)\n\n?/;
+
+function exportPy() {
+  const title = els.title.value.trim();
+  const body = normalize(els.source.value).replace(/\n*$/, '\n');
+  const py = (title ? `# title: ${title}\n\n` : '') + body;
+  download(new Blob([py], { type: 'text/x-python;charset=utf-8' }), fileBase() + '.py');
+  track('export_py');
+}
+
 function importText(text, name = '') {
-  if (/\.(md|markdown)$/i.test(name) || looksLikeMarkdown(text)) {
+  const isPy = /\.py$/i.test(name);
+  if (!isPy && (/\.(md|markdown)$/i.test(name) || looksLikeMarkdown(text))) {
     const doc = fromMarkdown(text);
     if (doc.title) els.title.value = doc.title;
     text = stepsToSource(doc.steps);
   } else {
     text = normalize(text);
+    const m = text.match(PY_TITLE);
+    if (m) {
+      els.title.value = m[1].trim();
+      text = text.slice(m[0].length);
+    }
   }
   replaceRange(els.source, 0, els.source.value.length, text);  // undoable with Ctrl+Z
   els.source.setSelectionRange(0, 0);
@@ -234,6 +251,7 @@ document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('c
 $('btnStep').addEventListener('click', toggleBlock);
 $('btnOpen').addEventListener('click', () => els.file.click());
 $('btnMd').addEventListener('click', exportMd);
+$('btnPy').addEventListener('click', exportPy);
 $('btnPng').addEventListener('click', async () => {
   download(await canvasBlob(), fileBase() + '.png');
   track('download_png', { theme });
