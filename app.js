@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const els = { title: $('title'), source: $('source'), canvas: $('preview'), file: $('file'), toast: $('toast') };
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const STORE_KEY = 'pipe-render.v1';
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 let themePref = 'auto';  // auto | light | dark, what the user picked
