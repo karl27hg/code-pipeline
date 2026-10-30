@@ -272,9 +272,18 @@ function toggleBlock() {
   const last = Math.max(first, v.slice(0, e).split('\n').length - 1);
   const selectLines = (from, out) => ta.setSelectionRange(from, from + out.join('\n').length);
 
-  // box -> commented out: caret on the box's "# %%" lines, or selection starting right below them
+  const range = lines.slice(first, last + 1);
+  const allComments = range.some(l => l.trim()) && range.every(l => !l.trim() || isComment(l));
+  const belowHead = first > 0 && isMarker(lines[first - 1]) && !isCloser(lines, first - 1);
+
+  // box -> commented out: caret on the box's "# %%" lines, or all of the box's code selected
   let g = isMarker(lines[first]) ? first : -1;
-  if (g < 0 && first > 0 && isMarker(lines[first - 1]) && !isCloser(lines, first - 1)) g = first - 1;
+  if (g < 0 && sel && belowHead && !allComments) {
+    let codeEnd = first;
+    while (codeEnd + 1 < lines.length && !isMarker(lines[codeEnd + 1])) codeEnd++;
+    while (codeEnd > first && !lines[codeEnd].trim()) codeEnd--;
+    if (last >= codeEnd) g = first - 1;
+  }
   if (g >= 0) {
     let a = g, b = g;
     while (a > 0 && isMarker(lines[a - 1])) a--;
@@ -293,10 +302,20 @@ function toggleBlock() {
   }
 
   // commented out -> code
-  const range = lines.slice(first, last + 1);
-  if (range.some(l => l.trim()) && range.every(l => !l.trim() || isComment(l))) {
+  if (allComments) {
     const out = uncommentLines(range);
-    selectLines(replaceLines(ta, lines, first, last, out), out);
+    const from = replaceLines(ta, lines, first, last, out);
+    if (sel) selectLines(from, out);
+    else ta.setSelectionRange(from + out[0].length, from + out[0].length);
+    return;
+  }
+
+  // part of a box's first lines: a "# %%" here would only extend the description, so comment them
+  if (belowHead && range.some(l => l.trim())) {
+    const out = commentLines(range);
+    const from = replaceLines(ta, lines, first, last, out);
+    if (sel) selectLines(from, out);
+    else ta.setSelectionRange(from + out[0].length, from + out[0].length);
     return;
   }
 
@@ -341,11 +360,50 @@ function deleteLines() {
   return lines.slice(first, last + 1).join('\n') + '\n';  // the removed lines
 }
 
+// Enter on a "# %%" line continues the description on a new "# %%" line, splitting at the caret.
+// Returns false when the browser's plain line break should happen instead.
+function continueMarker() {
+  const ta = els.source;
+  const v = ta.value;
+  const s = ta.selectionStart;
+  const start = v.slice(0, s).lastIndexOf('\n') + 1;
+  let end = v.indexOf('\n', s);
+  if (end < 0) end = v.length;
+  if (ta.selectionEnd > end) return false;
+  const line = v.slice(start, end);
+  const m = line.match(/^(\s*)#\s*%%[ \t]?/);
+  if (!m || s - start <= m[1].length) return false;  // at the line start: just push the line down
+  if (!line.slice(m[0].length).trim()) {
+    const lines = v.split('\n');
+    const k = v.slice(0, s).split('\n').length - 1;
+    if (isCloser(lines, k)) return false;
+    if (isMarker(lines[k - 1]) && !isMarker(lines[k + 1])) {  // empty extra line: leave the description
+      replaceRange(ta, start, end, '');
+      ta.setSelectionRange(start, start);
+      return true;
+    }
+  }
+  let left = line.slice(0, Math.max(s - start, m[0].length));
+  if (left.length > m[0].length) left = left.trimEnd();
+  const head = `${m[1]}# %% `;
+  const rest = line.slice(Math.max(ta.selectionEnd - start, m[0].length)).trimStart();
+  replaceRange(ta, start, end, `${left}\n${head}${rest}`);
+  const caret = start + left.length + 1 + head.length;
+  ta.setSelectionRange(caret, caret);
+  return true;
+}
+
 els.source.addEventListener('input', () => { highlight(); scheduleUpdate(); });
 els.source.addEventListener('scroll', syncScroll);
 els.title.addEventListener('input', scheduleUpdate);
 window.addEventListener('pagehide', save);  // keep edits made right before closing or reloading
+let plainBreak = false;  // Shift+Enter always inserts a plain line
+// beforeinput rather than keydown: it comes after the IME has committed Korean text
+els.source.addEventListener('beforeinput', e => {
+  if (e.inputType === 'insertLineBreak' && !plainBreak && continueMarker()) e.preventDefault();
+});
 els.source.addEventListener('keydown', e => {
+  if (e.key === 'Enter') plainBreak = e.shiftKey;
   if (e.key === 'Tab' && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     els.source.setRangeText('    ', els.source.selectionStart, els.source.selectionEnd, 'end');
